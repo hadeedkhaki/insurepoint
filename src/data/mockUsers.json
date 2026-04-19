@@ -54,5 +54,13 @@
     "name": "Ryhan Shaik",
     "role": "frontdesk",
     "title": "Front Desk Admin"
+  },
+  {
+    "id": "u8",
+    "email": "taha@med.com",
+    "password": "taha",
+    "name": "Taha",
+    "role": "frontdesk",
+    "title": "Front Desk Admin"
   }
 ]
