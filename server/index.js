@@ -915,7 +915,11 @@ app.get('/api/stats', (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Loaded ${allCards.length} insurance cards from database`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Loaded ${allCards.length} insurance cards from database`);
+  });
+}
+
+export default app;
