@@ -7,11 +7,12 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createWorker } from 'tesseract.js';
 import sharp from 'sharp';
+import * as state from './state.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
@@ -133,74 +134,90 @@ function generateNotes(card) {
 }
 
 // ===== AUDIT LOG =====
-const auditLog = [];
-
 function logAudit(entry) {
   const record = {
-    id: `audit-${auditLog.length + 1}`,
+    id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     timestamp: new Date().toISOString(),
     ...entry,
   };
-  auditLog.push(record);
-  // Keep last 1000 entries in memory
-  if (auditLog.length > 1000) auditLog.shift();
   console.log(`[AUDIT] ${record.timestamp} | ${record.userName || 'system'} (${record.role || '-'}) | ${record.action} | ${record.details || ''}`);
+  state.appendAudit(record).catch((e) => console.error('audit write failed:', e.message));
 }
 
-// Pre-seeded scan history from real data — spread across last 7 days
-const staffNames = ['Sarah Johnson', 'James Rivera', 'Emily Kim', 'Hadeed Khaki'];
-const statusOptions = ['completed', 'completed', 'completed', 'completed', 'waiting', 'in-progress', 'cancelled'];
-const methodOptions = ['scan', 'scan', 'scan', 'manual'];
+// ===== SEED BUILDER — called once per KV store (or once per process in dev) =====
+function buildSeedScans() {
+  const staffNames = ['Sarah Johnson', 'James Rivera', 'Emily Kim', 'Hadeed Khaki'];
+  const statusOptions = ['completed', 'completed', 'completed', 'completed', 'waiting', 'in-progress', 'cancelled'];
+  const methodOptions = ['scan', 'scan', 'scan', 'manual'];
 
-// Pick 50 diverse records for history (spread over 7 days)
-const allMemberIds = Object.keys(cardsDB);
-const seedCount = 50;
-const seedMemberIds = [];
-const step = Math.floor(allMemberIds.length / seedCount);
-for (let i = 0; i < seedCount; i++) {
-  seedMemberIds.push(allMemberIds[i * step]);
+  const allMemberIds = Object.keys(cardsDB);
+  const seedCount = 50;
+  const seedMemberIds = [];
+  const step = Math.floor(allMemberIds.length / seedCount) || 1;
+  for (let i = 0; i < seedCount; i++) {
+    seedMemberIds.push(allMemberIds[i * step]);
+  }
+
+  return seedMemberIds.map((mid, i) => {
+    const card = cardsDB[mid];
+    const plan = cardToPlan(card);
+
+    const daysAgo = Math.floor((i / seedCount) * 7);
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    const hour = 7 + (i % 12);
+    const minute = (i * 13) % 60;
+    date.setHours(hour, minute, 0, 0);
+
+    const status = daysAgo === 0
+      ? statusOptions[i % statusOptions.length]
+      : 'completed';
+
+    return {
+      id: `scan-${i + 1}`,
+      timestamp: date.toISOString(),
+      status,
+      patientName: `${card.subscriber.first_name} ${card.subscriber.last_name}`,
+      insuranceProvider: card.payer_name,
+      memberId: card.member_id,
+      groupNumber: card.group_number || 'N/A',
+      planCategory: card.category,
+      planType: card.plan_type,
+      erCopay: plan.erCopay,
+      erCoinsurance: plan.erCoinsurance,
+      deductible: plan.deductible,
+      billable: plan.billable,
+      planRating: plan.planRating,
+      isBadPlan: plan.isBadPlan,
+      scannedBy: staffNames[i % staffNames.length],
+      method: methodOptions[i % methodOptions.length],
+      visitNumber: 1,
+    };
+  });
 }
 
-const scanHistory = seedMemberIds.map((mid, i) => {
-  const card = cardsDB[mid];
-  const plan = cardToPlan(card);
-
-  // Spread across last 7 days, with more recent days having more entries
-  const daysAgo = Math.floor((i / seedCount) * 7);
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  const hour = 7 + (i % 12);
-  const minute = (i * 13) % 60;
-  date.setHours(hour, minute, 0, 0);
-
-  // Today's entries get active statuses, older ones are completed
-  const status = daysAgo === 0
-    ? statusOptions[i % statusOptions.length]
-    : (daysAgo <= 1 ? 'completed' : 'completed');
-
-  return {
-    id: `scan-${i + 1}`,
-    timestamp: date.toISOString(),
-    status,
-    patientName: `${card.subscriber.first_name} ${card.subscriber.last_name}`,
-    insuranceProvider: card.payer_name,
-    memberId: card.member_id,
-    groupNumber: card.group_number || 'N/A',
-    planCategory: card.category,
-    planType: card.plan_type,
-    erCopay: plan.erCopay,
-    erCoinsurance: plan.erCoinsurance,
-    deductible: plan.deductible,
-    billable: plan.billable,
-    planRating: plan.planRating,
-    isBadPlan: plan.isBadPlan,
-    scannedBy: staffNames[i % staffNames.length],
-    method: methodOptions[i % methodOptions.length],
-    visitNumber: 1,
-  };
+// Ensure the KV store is seeded before any handler runs.
+app.use(async (_req, _res, next) => {
+  try {
+    await state.ensureSeeded(buildSeedScans);
+    next();
+  } catch (err) {
+    console.error('seed failed:', err.message);
+    next(err);
+  }
 });
 
-let scanIdCounter = seedCount + 1;
+// ---- Card lookup helpers (static cardsDB + dynamic cards added via registration) ----
+async function findCardByMemberId(memberId) {
+  if (cardsDB[memberId]) return cardsDB[memberId];
+  const dyn = await state.getDynamicCards();
+  return dyn.find((c) => c.member_id === memberId) || null;
+}
+
+async function getAllCardsMerged() {
+  const dyn = await state.getDynamicCards();
+  return [...allCards, ...dyn];
+}
 
 // ===== AUTH =====
 app.post('/api/login', (req, res) => {
@@ -221,7 +238,8 @@ app.post('/api/audit', (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/audit', (_req, res) => {
+app.get('/api/audit', async (_req, res) => {
+  const auditLog = await state.getAuditLog();
   res.json([...auditLog].reverse().slice(0, 200));
 });
 
@@ -526,29 +544,31 @@ app.post('/api/scan-license', async (req, res) => {
 });
 
 // ===== LOOKUP — match by provider name, member ID, or plan details =====
-app.post('/api/lookup', (req, res) => {
+app.post('/api/lookup', async (req, res) => {
   const { insuranceProvider, planCategory, planType, memberId } = req.body;
 
-  // Try direct member ID lookup first
-  if (memberId && cardsDB[memberId]) {
-    const card = cardsDB[memberId];
-    const plan = cardToPlan(card);
-
-    return res.json({
-      matched: true,
-      provider: card.payer_name,
-      plan,
-      patientResponsibility: plan.erCopay,
-      erConfig,
-      subscriber: card.subscriber,
-      memberId: card.member_id,
-      groupNumber: card.group_number,
-      effectiveDate: card.effective_date,
-      status: card.status,
-    });
+  // Try direct member ID lookup first (static + dynamic cards)
+  if (memberId) {
+    const card = await findCardByMemberId(memberId);
+    if (card) {
+      const plan = cardToPlan(card);
+      return res.json({
+        matched: true,
+        provider: card.payer_name,
+        plan,
+        patientResponsibility: plan.erCopay,
+        erConfig,
+        subscriber: card.subscriber,
+        memberId: card.member_id,
+        groupNumber: card.group_number,
+        effectiveDate: card.effective_date,
+        status: card.status,
+      });
+    }
   }
 
   // Fuzzy match by provider name + category + plan type
+  const mergedCards = await getAllCardsMerged();
   const name = (insuranceProvider || '').toLowerCase();
   const cat = (planCategory || '').toLowerCase();
   const type = (planType || '').toLowerCase();
@@ -591,7 +611,7 @@ app.post('/api/lookup', (req, res) => {
 
   // Also try matching against payer_name directly
   if (matchingKeys.length === 0) {
-    const directMatch = allCards.find(c => c.payer_name.toLowerCase().includes(name) || name.includes(c.payer_name.toLowerCase()));
+    const directMatch = mergedCards.find(c => c.payer_name.toLowerCase().includes(name) || name.includes(c.payer_name.toLowerCase()));
     if (directMatch) {
       matchingKeys = [directMatch.issuer_key];
     }
@@ -602,7 +622,7 @@ app.post('/api/lookup', (req, res) => {
   }
 
   // Filter cards by matching issuer keys
-  let candidates = allCards.filter(c => matchingKeys.includes(c.issuer_key));
+  let candidates = mergedCards.filter(c => matchingKeys.includes(c.issuer_key));
 
   // Narrow by category if provided
   if (cat && candidates.some(c => c.category === cat)) {
@@ -632,8 +652,8 @@ app.post('/api/lookup', (req, res) => {
 });
 
 // ===== MEMBER LOOKUP (direct by ID) =====
-app.get('/api/member/:memberId', (req, res) => {
-  const card = cardsDB[req.params.memberId];
+app.get('/api/member/:memberId', async (req, res) => {
+  const card = await findCardByMemberId(req.params.memberId);
   if (!card) {
     return res.status(404).json({ error: 'Member not found' });
   }
@@ -657,13 +677,13 @@ app.get('/api/member/:memberId', (req, res) => {
 });
 
 // ===== PATIENTS (paginated directory of all cards) =====
-app.get('/api/patients', (req, res) => {
+app.get('/api/patients', async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
   const search = (req.query.search || '').toLowerCase();
   const category = (req.query.category || '').toLowerCase();
 
-  let filtered = allCards;
+  let filtered = await getAllCardsMerged();
 
   if (search) {
     filtered = filtered.filter(c =>
@@ -716,16 +736,13 @@ app.get('/api/patients', (req, res) => {
 });
 
 // ===== REGISTRATION =====
-const registrations = [];
-let regIdCounter = 1;
-
-app.post('/api/registration', (req, res) => {
+app.post('/api/registration', async (req, res) => {
   const reg = {
-    id: `reg-${regIdCounter++}`,
+    id: await state.nextRegId(),
     timestamp: new Date().toISOString(),
     ...req.body,
   };
-  registrations.push(reg);
+  await state.pushRegistration(reg);
 
   const b = req.body;
   const fullName = `${b.firstName} ${b.lastName}`;
@@ -740,7 +757,7 @@ app.post('/api/registration', (req, res) => {
   else if (insLower.includes('medicaid')) category = 'medicaid';
   else if (insLower.includes('marketplace') || insLower.includes('exchange')) category = 'marketplace';
 
-  // Add to cardsDB and allCards so patient appears in Patient Directory
+  // Persist as a dynamic card so the patient appears in Patient Directory and lookups.
   const newCard = {
     member_id: memberId,
     payer_name: insuranceName,
@@ -771,12 +788,11 @@ app.post('/api/registration', (req, res) => {
     },
     pcp: null,
   };
-  cardsDB[memberId] = newCard;
-  allCards.push(newCard);
+  await state.pushDynamicCard(newCard);
 
   // Add to scanHistory (queue) as waiting
   const queueEntry = {
-    id: `scan-${scanIdCounter++}`,
+    id: await state.nextScanId(),
     timestamp: new Date().toISOString(),
     status: 'waiting',
     patientName: fullName,
@@ -796,24 +812,26 @@ app.post('/api/registration', (req, res) => {
     visitNumber: 1,
     insuranceUpdated: false,
   };
-  scanHistory.push(queueEntry);
+  await state.pushScan(queueEntry);
 
   logAudit({ action: 'patient_registered', details: `Registered ${b.lastName}, ${b.firstName}` });
   res.json(reg);
 });
 
-app.get('/api/registrations', (_req, res) => {
+app.get('/api/registrations', async (_req, res) => {
+  const registrations = await state.getRegistrations();
   res.json([...registrations].reverse());
 });
 
 // ===== HISTORY =====
-app.get('/api/history', (_req, res) => {
+app.get('/api/history', async (_req, res) => {
+  const scanHistory = await state.getScanHistory();
   res.json([...scanHistory].reverse());
 });
 
-app.post('/api/history', (req, res) => {
+app.post('/api/history', async (req, res) => {
   const entry = {
-    id: `scan-${scanIdCounter++}`,
+    id: await state.nextScanId(),
     timestamp: new Date().toISOString(),
     status: 'waiting',
     ...req.body,
@@ -822,6 +840,7 @@ app.post('/api/history', (req, res) => {
   // Auto-detect insurance change: same patient (name match), different provider or member ID
   const patientNameLower = (entry.patientName || '').toLowerCase().trim();
   if (patientNameLower) {
+    const scanHistory = await state.getScanHistory();
     const previousVisits = scanHistory.filter(s =>
       (s.patientName || '').toLowerCase().trim() === patientNameLower
     );
@@ -853,13 +872,14 @@ app.post('/api/history', (req, res) => {
     }
   }
 
-  scanHistory.push(entry);
+  await state.pushScan(entry);
   logAudit({ userName: req.body.scannedBy, action: 'save_record', details: `Saved ${entry.patientName} (${entry.insuranceProvider}) via ${entry.method}` });
   res.json(entry);
 });
 
 // ===== QUEUE =====
-app.get('/api/queue', (_req, res) => {
+app.get('/api/queue', async (_req, res) => {
+  const scanHistory = await state.getScanHistory();
   const today = new Date();
   const todayStr = today.toDateString();
   const tomorrow = new Date(today);
@@ -874,17 +894,17 @@ app.get('/api/queue', (_req, res) => {
   res.json(queue);
 });
 
-app.patch('/api/queue/:id', (req, res) => {
-  const entry = scanHistory.find((s) => s.id === req.params.id);
-  if (!entry) return res.status(404).json({ error: 'Not found' });
-  const oldStatus = entry.status;
-  entry.status = req.body.status;
+app.patch('/api/queue/:id', async (req, res) => {
+  const result = await state.updateScanStatus(req.params.id, req.body.status);
+  if (!result) return res.status(404).json({ error: 'Not found' });
+  const { entry, oldStatus } = result;
   logAudit({ action: 'queue_update', details: `Patient ${entry.patientName} status: ${oldStatus} → ${entry.status}` });
   res.json(entry);
 });
 
 // ===== STATS =====
-app.get('/api/stats', (_req, res) => {
+app.get('/api/stats', async (_req, res) => {
+  const scanHistory = await state.getScanHistory();
   const todayStr = new Date().toDateString();
   const todayScans = scanHistory.filter((s) => new Date(s.timestamp).toDateString() === todayStr);
 
@@ -917,8 +937,9 @@ app.get('/api/stats', (_req, res) => {
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
     console.log(`Loaded ${allCards.length} insurance cards from database`);
+    console.log(`State backend: ${state.USE_KV ? 'Upstash Redis (KV)' : 'in-memory (dev)'}`);
   });
 }
 

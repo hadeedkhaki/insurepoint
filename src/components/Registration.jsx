@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { readImageFile, IMAGE_ACCEPT } from '../utils/imageUpload';
+import { useAuth } from '../context/AuthContext';
 
 const emptyForm = {
   // Patient Information
@@ -69,6 +70,7 @@ function clearDraft() {
 export default function Registration() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const draft = useRef(loadDraft()).current;
   const [form, setForm] = useState(draft?.form || { ...emptyForm });
   const [submitted, setSubmitted] = useState(false);
@@ -346,7 +348,7 @@ export default function Registration() {
       await fetch('/api/registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, registeredBy: user?.name, registeredById: user?.id }),
       });
     } catch {
       // still proceed even if request fails
