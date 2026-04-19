@@ -7,7 +7,6 @@ import PatientQueue from './components/PatientQueue';
 import ScanHistory from './components/ScanHistory';
 import PatientDirectory from './components/PatientDirectory';
 import Registration from './components/Registration';
-import BillingCalculator from './components/BillingCalculator';
 import './App.css';
 
 function SessionWarning() {
@@ -54,7 +53,6 @@ function AppRoutes() {
           <Route path="/history" element={<ScanHistory />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/patients" element={<PatientDirectory />} />
-          {isAdmin && <Route path="/billing" element={<BillingCalculator />} />}
           {isAdmin && <Route path="/dashboard" element={<Dashboard />} />}
           <Route path="*" element={<Navigate to={isAdmin ? '/dashboard' : '/register'} replace />} />
         </Routes>

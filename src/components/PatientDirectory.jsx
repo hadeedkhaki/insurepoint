@@ -223,20 +223,6 @@ export default function PatientDirectory() {
                         <span className="directory-field-label">In-Network</span>
                         <span className="directory-field-value">{p.inNetwork ? 'Yes' : 'No'}</span>
                       </div>
-                      {isAdmin && (
-                        <>
-                          <div className="directory-field">
-                            <span className="directory-field-label">Expected Reimbursement</span>
-                            <span className="directory-field-value">${p.expectedReimbursement.toLocaleString()}</span>
-                          </div>
-                          <div className="directory-field">
-                            <span className="directory-field-label">Profitability</span>
-                            <span className={`directory-field-value profit-${p.profitability}`}>
-                              {p.profitability.charAt(0).toUpperCase() + p.profitability.slice(1)}
-                            </span>
-                          </div>
-                        </>
-                      )}
                       <div className="directory-field">
                         <span className="directory-field-label">Billable</span>
                         <span className="directory-field-value">{p.billable ? 'Yes' : 'No'}</span>

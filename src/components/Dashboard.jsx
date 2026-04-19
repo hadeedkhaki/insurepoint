@@ -14,13 +14,12 @@ function ActivityItem({ scan }) {
   return (
     <div className={`activity-item-wrap ${expanded ? 'expanded' : ''}`}>
       <div className="activity-item" onClick={() => setExpanded(!expanded)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}>
-        <div className={`activity-dot activity-dot-${scan.profitability || 'medium'}`} />
+        <div className={`activity-dot activity-dot-${scan.planRating || 'standard'}`} />
         <div className="activity-content">
           <span className="activity-name">{scan.patientName}</span>
           <span className="activity-detail">{scan.planType || scan.insuranceProvider}</span>
         </div>
         <div className="activity-meta">
-          <span className="activity-reimb">${scan.expectedReimbursement || 0}</span>
           <span className="activity-time">
             {new Date(scan.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
@@ -72,16 +71,6 @@ function ActivityItem({ scan }) {
               <span className="activity-field-value">${(scan.deductible || 0).toLocaleString()}</span>
             </div>
             <div className="activity-field">
-              <span className="activity-field-label">Expected Reimbursement</span>
-              <span className="activity-field-value">${(scan.expectedReimbursement || 0).toLocaleString()}</span>
-            </div>
-            <div className="activity-field">
-              <span className="activity-field-label">Profitability</span>
-              <span className={`activity-field-value profit-${scan.profitability || 'medium'}`}>
-                {(scan.profitability || 'unknown').charAt(0).toUpperCase() + (scan.profitability || 'unknown').slice(1)}
-              </span>
-            </div>
-            <div className="activity-field">
               <span className="activity-field-label">Billable</span>
               <span className="activity-field-value">{scan.billable ? 'Yes' : 'No'}</span>
             </div>
@@ -128,7 +117,7 @@ export default function Dashboard() {
       <div className="page-header">
         <div>
           <h2 className="page-title">Dashboard</h2>
-          <p className="page-sub">Financial overview &amp; patient flow</p>
+          <p className="page-sub">Patient flow &amp; coverage overview</p>
         </div>
       </div>
 
@@ -143,43 +132,6 @@ export default function Dashboard() {
           <div className="stat-info">
             <span className="stat-number">{stats.todayScans}</span>
             <span className="stat-label">Scans Today</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-green">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-            </svg>
-          </div>
-          <div className="stat-info">
-            <span className="stat-number">${(stats.totalExpectedReimbursement / 1000).toFixed(1)}k</span>
-            <span className="stat-label">Expected Revenue</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-indigo">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-            </svg>
-          </div>
-          <div className="stat-info">
-            <span className="stat-number">${stats.avgReimbursement}</span>
-            <span className="stat-label">Avg Reimbursement</span>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon stat-icon-red">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </div>
-          <div className="stat-info">
-            <span className="stat-number">{stats.lowReimbursementCount}</span>
-            <span className="stat-label">Low Profit Flags</span>
           </div>
         </div>
 
@@ -236,13 +188,12 @@ export default function Dashboard() {
       <div className="dash-grid">
         {stats.providerBreakdown.length > 0 && (
           <div className="card">
-            <h3 className="card-title">Provider Revenue</h3>
+            <h3 className="card-title">Provider Breakdown</h3>
             <table className="data-table">
               <thead>
                 <tr>
                   <th>Provider</th>
                   <th>Scans</th>
-                  <th>Avg Reimb.</th>
                 </tr>
               </thead>
               <tbody>
@@ -250,7 +201,6 @@ export default function Dashboard() {
                   <tr key={p.provider}>
                     <td className="td-bold">{p.provider}</td>
                     <td>{p.count}</td>
-                    <td>${p.avgReimbursement}</td>
                   </tr>
                 ))}
               </tbody>

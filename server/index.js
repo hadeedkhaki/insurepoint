@@ -20,74 +20,22 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Load mock users, insurance cards, and ER tests database
+// Load mock users and insurance cards
 const users = JSON.parse(readFileSync(join(__dirname, '..', 'src', 'data', 'mockUsers.json'), 'utf-8'));
 const cardsDB = JSON.parse(readFileSync(join(__dirname, '..', 'src', 'data', 'cards_by_member_id.json'), 'utf-8'));
 const allCards = Object.values(cardsDB);
-const erTestsDB = JSON.parse(readFileSync(join(__dirname, '..', 'src', 'data', 'er_tests.json'), 'utf-8'));
-
-// Build flat lookup of all tests by CPT code
-const allTests = {};
-for (const [catKey, cat] of Object.entries(erTestsDB.categories)) {
-  for (const [code, test] of Object.entries(cat.tests)) {
-    allTests[code] = { ...test, code, category: catKey, categoryName: cat.description };
-  }
-}
-console.log(`Loaded ${Object.keys(allTests).length} ER test/procedure codes`);
 
 // ER facility config (hospital-level settings, not per-card)
 const erConfig = {
   facilityName: 'inSUREd Medical Center',
-  facilityFee: 1800,
-  physicianFee: 450,
-  avgERCost: 2250,
-  profitThreshold: 0.60,
   highCopayWarning: 250,
   collectUpfront: true,
   notes: 'Collect copay at time of service when possible',
 };
 
-// Helper: estimate expected reimbursement from card coverage data
-function estimateReimbursement(card) {
-  const cov = card.coverage;
-  const copay = cov.copay_er || 0;
-  const coinsurance = cov.coinsurance_after_deductible || 0;
-  const deductibleRemaining = cov.deductible?.remaining ?? cov.deductible?.individual ?? 0;
-  const coveragePct = cov.coverage_percent_in_network || 80;
-
-  // Estimate: avg ER cost minus patient portion
-  const afterCopay = erConfig.avgERCost - copay;
-  const deductibleApplied = Math.min(deductibleRemaining, afterCopay);
-  const afterDeductible = afterCopay - deductibleApplied;
-  const insurancePays = afterDeductible * (coveragePct / 100);
-
-  return Math.round(Math.max(insurancePays, 0));
-}
-
-// Helper: calculate profitability
-function calcProfitability(expectedReimbursement) {
-  const ratio = expectedReimbursement / erConfig.avgERCost;
-  if (ratio >= erConfig.profitThreshold + 0.15) return 'high';
-  if (ratio < erConfig.profitThreshold) return 'low';
-  return 'medium';
-}
-
-// Helper: estimate time to pay based on category
-function estimateTimeToPay(card) {
-  switch (card.category) {
-    case 'medicare': return '14 days';
-    case 'medicaid': return '30-45 days';
-    case 'employer': return '30 days';
-    case 'marketplace': return '45 days';
-    case 'government': return '21 days';
-    default: return '30 days';
-  }
-}
-
 // Helper: convert card to plan object (compatible with ResultCard)
 function cardToPlan(card) {
   const cov = card.coverage;
-  const expectedReimbursement = estimateReimbursement(card);
   const hasPreAuth = cov.prior_auth_required_services && cov.prior_auth_required_services.length > 0;
 
   // Determine plan quality for ER
@@ -120,12 +68,10 @@ function cardToPlan(card) {
     deductibleMet: cov.deductible?.met_to_date || 0,
     outOfPocketMax: cov.out_of_pocket_max?.individual || 0,
     outOfPocketRemaining: cov.out_of_pocket_max?.remaining ?? 0,
-    billable: card.category !== 'medicaid' || expectedReimbursement > 0,
+    billable: card.category !== 'medicaid',
     inNetwork: cov.coverage_percent_in_network > 0,
     preAuthRequired: hasPreAuth,
     preAuthServices: cov.prior_auth_required_services || [],
-    expectedReimbursement,
-    timeToPay: estimateTimeToPay(card),
     notes: generateNotes(card),
     planRating,
     isBadPlan,
@@ -218,7 +164,6 @@ for (let i = 0; i < seedCount; i++) {
 const scanHistory = seedMemberIds.map((mid, i) => {
   const card = cardsDB[mid];
   const plan = cardToPlan(card);
-  const expectedReimbursement = plan.expectedReimbursement;
 
   // Spread across last 7 days, with more recent days having more entries
   const daysAgo = Math.floor((i / seedCount) * 7);
@@ -246,9 +191,7 @@ const scanHistory = seedMemberIds.map((mid, i) => {
     erCopay: plan.erCopay,
     erCoinsurance: plan.erCoinsurance,
     deductible: plan.deductible,
-    expectedReimbursement,
     billable: plan.billable,
-    profitability: calcProfitability(expectedReimbursement),
     planRating: plan.planRating,
     isBadPlan: plan.isBadPlan,
     scannedBy: staffNames[i % staffNames.length],
@@ -550,14 +493,12 @@ app.post('/api/lookup', (req, res) => {
   if (memberId && cardsDB[memberId]) {
     const card = cardsDB[memberId];
     const plan = cardToPlan(card);
-    const expectedReimbursement = plan.expectedReimbursement;
 
     return res.json({
       matched: true,
       provider: card.payer_name,
       plan,
-      profitability: calcProfitability(expectedReimbursement),
-      patientResponsibility: Math.round(plan.erCopay + (plan.erCoinsurance / 100 * erConfig.avgERCost)),
+      patientResponsibility: plan.erCopay,
       erConfig,
       subscriber: card.subscriber,
       memberId: card.member_id,
@@ -640,14 +581,12 @@ app.post('/api/lookup', (req, res) => {
   }
 
   const plan = cardToPlan(card);
-  const expectedReimbursement = plan.expectedReimbursement;
 
   res.json({
     matched: true,
     provider: card.payer_name,
     plan,
-    profitability: calcProfitability(expectedReimbursement),
-    patientResponsibility: Math.round(plan.erCopay + (plan.erCoinsurance / 100 * erConfig.avgERCost)),
+    patientResponsibility: plan.erCopay,
     erConfig,
   });
 });
@@ -660,7 +599,6 @@ app.get('/api/member/:memberId', (req, res) => {
   }
 
   const plan = cardToPlan(card);
-  const expectedReimbursement = plan.expectedReimbursement;
 
   res.json({
     matched: true,
@@ -672,8 +610,7 @@ app.get('/api/member/:memberId', (req, res) => {
     status: card.status,
     category: card.category,
     plan,
-    profitability: calcProfitability(expectedReimbursement),
-    patientResponsibility: Math.round(plan.erCopay + (plan.erCoinsurance / 100 * erConfig.avgERCost)),
+    patientResponsibility: plan.erCopay,
     erConfig,
     pharmacy: card.pharmacy,
   });
@@ -724,8 +661,6 @@ app.get('/api/patients', (req, res) => {
       deductible: plan.deductible,
       deductibleRemaining: plan.deductibleRemaining,
       outOfPocketMax: plan.outOfPocketMax,
-      expectedReimbursement: plan.expectedReimbursement,
-      profitability: calcProfitability(plan.expectedReimbursement),
       billable: plan.billable,
       inNetwork: plan.inNetwork,
       preAuthRequired: plan.preAuthRequired,
@@ -813,9 +748,7 @@ app.post('/api/registration', (req, res) => {
     erCopay: 150,
     erCoinsurance: 20,
     deductible: 2000,
-    expectedReimbursement: 800,
     billable: true,
-    profitability: 'standard',
     planRating: 'standard',
     isBadPlan: false,
     scannedBy: 'Registration',
@@ -831,146 +764,6 @@ app.post('/api/registration', (req, res) => {
 
 app.get('/api/registrations', (_req, res) => {
   res.json([...registrations].reverse());
-});
-
-// ===== ER TESTS & BILLING =====
-app.get('/api/er-tests', (_req, res) => {
-  // Return organized test catalog
-  const catalog = {};
-  for (const [catKey, cat] of Object.entries(erTestsDB.categories)) {
-    catalog[catKey] = {
-      name: catKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-      description: cat.description,
-      tests: Object.entries(cat.tests).map(([code, t]) => ({
-        code,
-        name: t.name,
-        description: t.description,
-        chargemaster_price: t.chargemaster_price,
-        cash_price: t.cash_price,
-        insurance_negotiated_rate: t.insurance_negotiated_rate,
-        medicare_rate: t.medicare_rate,
-        medicaid_rate: t.medicaid_rate,
-      })),
-    };
-  }
-  res.json(catalog);
-});
-
-// Calculate bill for selected tests based on patient's insurance
-app.post('/api/calculate-bill', (req, res) => {
-  const { codes, memberId, payerType } = req.body;
-  // codes: array of { code, quantity }
-  // memberId: optional, to look up insurance
-  // payerType: override — 'chargemaster', 'cash', 'insurance', 'medicare', 'medicaid'
-
-  if (!codes || !Array.isArray(codes) || codes.length === 0) {
-    return res.status(400).json({ error: 'No test codes provided' });
-  }
-
-  // Determine which rate to use
-  let rateKey = 'chargemaster_price'; // default (uninsured)
-  let rateName = 'Chargemaster (List Price)';
-  let card = null;
-  let plan = null;
-
-  if (memberId && cardsDB[memberId]) {
-    card = cardsDB[memberId];
-    plan = cardToPlan(card);
-    const cat = card.category;
-    if (cat === 'medicare') {
-      rateKey = 'medicare_rate';
-      rateName = 'Medicare Rate';
-    } else if (cat === 'medicaid') {
-      rateKey = 'medicaid_rate';
-      rateName = 'Medicaid Rate';
-    } else {
-      rateKey = 'insurance_negotiated_rate';
-      rateName = 'Insurance Negotiated Rate';
-    }
-  }
-
-  // Allow manual override
-  if (payerType) {
-    const rateMap = {
-      chargemaster: { key: 'chargemaster_price', name: 'Chargemaster (List Price)' },
-      cash: { key: 'cash_price', name: 'Cash / Self-Pay Rate' },
-      insurance: { key: 'insurance_negotiated_rate', name: 'Insurance Negotiated Rate' },
-      medicare: { key: 'medicare_rate', name: 'Medicare Rate' },
-      medicaid: { key: 'medicaid_rate', name: 'Medicaid Rate' },
-    };
-    if (rateMap[payerType]) {
-      rateKey = rateMap[payerType].key;
-      rateName = rateMap[payerType].name;
-    }
-  }
-
-  const lineItems = [];
-  let subtotal = 0;
-  let chargemasterTotal = 0;
-
-  for (const { code, quantity = 1 } of codes) {
-    const test = allTests[code];
-    if (!test) continue;
-    const rate = test[rateKey] || test.chargemaster_price;
-    const chargemaster = test.chargemaster_price;
-    const lineTotal = rate * quantity;
-    const lineChargemaster = chargemaster * quantity;
-    subtotal += lineTotal;
-    chargemasterTotal += lineChargemaster;
-
-    lineItems.push({
-      code,
-      name: test.name,
-      category: test.category,
-      quantity,
-      unitPrice: rate,
-      chargemasterPrice: chargemaster,
-      lineTotal,
-    });
-  }
-
-  // Apply patient's insurance cost-sharing if we have their plan
-  let patientOwes = subtotal;
-  let insurancePays = 0;
-  let copayApplied = 0;
-  let deductibleApplied = 0;
-  let coinsuranceApplied = 0;
-
-  if (plan) {
-    copayApplied = plan.erCopay;
-    const afterCopay = subtotal - copayApplied;
-    deductibleApplied = Math.min(plan.deductibleRemaining, Math.max(0, afterCopay));
-    const afterDeductible = Math.max(0, afterCopay - deductibleApplied);
-    coinsuranceApplied = Math.round(afterDeductible * (plan.erCoinsurance / 100));
-    patientOwes = copayApplied + deductibleApplied + coinsuranceApplied;
-    insurancePays = Math.max(0, subtotal - patientOwes);
-  }
-
-  const savings = chargemasterTotal - subtotal;
-
-  res.json({
-    lineItems,
-    subtotal,
-    chargemasterTotal,
-    savings,
-    rateName,
-    rateKey,
-    patientOwes: Math.round(patientOwes),
-    insurancePays: Math.round(insurancePays),
-    costSharing: plan ? {
-      copay: copayApplied,
-      deductible: deductibleApplied,
-      coinsurance: coinsuranceApplied,
-    } : null,
-    patient: card ? {
-      name: `${card.subscriber.first_name} ${card.subscriber.last_name}`,
-      provider: card.payer_name,
-      category: card.category,
-      planType: card.plan_type,
-    } : null,
-    testCount: lineItems.length,
-    totalQuantity: lineItems.reduce((s, l) => s + l.quantity, 0),
-  });
 });
 
 // ===== HISTORY =====
@@ -1057,21 +850,17 @@ app.get('/api/stats', (_req, res) => {
 
   const providerMap = {};
   const categoryCount = { employer: 0, marketplace: 0, medicare: 0, medicaid: 0, government: 0 };
-  let totalReimbursement = 0;
 
   for (const s of scanHistory) {
     const key = s.insuranceProvider || 'Unknown';
     if (!providerMap[key]) {
-      providerMap[key] = { provider: key, count: 0, billable: s.billable, avgReimbursement: 0, totalReimbursement: 0 };
+      providerMap[key] = { provider: key, count: 0, billable: s.billable };
     }
     providerMap[key].count++;
-    providerMap[key].totalReimbursement += s.expectedReimbursement || 0;
-    providerMap[key].avgReimbursement = Math.round(providerMap[key].totalReimbursement / providerMap[key].count);
 
     if (s.planCategory && categoryCount[s.planCategory] !== undefined) {
       categoryCount[s.planCategory]++;
     }
-    totalReimbursement += s.expectedReimbursement || 0;
   }
 
   res.json({
@@ -1079,10 +868,7 @@ app.get('/api/stats', (_req, res) => {
     totalScans: scanHistory.length,
     billableCount: scanHistory.filter((s) => s.billable).length,
     highCopayCount: scanHistory.filter((s) => s.erCopay > 250).length,
-    lowReimbursementCount: scanHistory.filter((s) => s.profitability === 'low').length,
     queueSize: todayScans.filter((s) => s.status === 'waiting').length,
-    totalExpectedReimbursement: totalReimbursement,
-    avgReimbursement: scanHistory.length > 0 ? Math.round(totalReimbursement / scanHistory.length) : 0,
     categoryCount,
     providerBreakdown: Object.values(providerMap),
     recentScans: [...scanHistory].reverse().slice(0, 10),

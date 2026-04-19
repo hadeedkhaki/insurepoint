@@ -6,8 +6,7 @@ ER insurance management platform for verifying patient coverage, estimating cost
 
 - **Insurance card capture** — OCR-powered scanning (Tesseract.js) plus manual entry fallback
 - **Patient registration & directory** — intake forms with draft persistence
-- **Coverage lookup** — match scanned cards against the mock insurance database
-- **Billing calculator** — estimate patient responsibility using 2025–2026 ER pricing data (facility fee, physician fee, labs, imaging, procedures)
+- **Coverage lookup** — match scanned cards against the mock insurance database, surface copay/deductible for check-in collection
 - **Patient queue & scan history** — track active visits and prior scans
 - **Role-based auth** — session-timed login with audit logging
 - **AI assist** — Anthropic SDK integration for card parsing and workflow help
@@ -51,11 +50,11 @@ ANTHROPIC_API_KEY=your_key_here
 ## Project Structure
 
 ```
-server/           Express API (auth, uploads, billing, audit)
+server/           Express API (auth, uploads, coverage lookup, audit)
 src/
-  components/    UI (Dashboard, Scan, Billing, Registration, Queue, ...)
+  components/    UI (Dashboard, Scan, Registration, Queue, ...)
   context/       AuthContext — session + role state
-  data/          Mock users, insurance plans, ER test/procedure pricing
+  data/          Mock users and insurance cards
 public/          Static assets
 ```
 
@@ -64,9 +63,7 @@ public/          Static assets
 The app ships with mock datasets used for development and demo:
 
 - `src/data/mockUsers.json` — staff accounts and roles
-- `src/data/mockInsurance.json` — plans, facility config, coverage rules
-- `src/data/er_tests.json` — ER tests/procedures with chargemaster, cash, and negotiated prices
-- `src/data/cards_by_member_id.json` — sample member card lookups
+- `src/data/cards_by_member_id.json` — sample member card lookups with coverage details
 
 ## License
 
