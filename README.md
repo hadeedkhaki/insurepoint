@@ -1,16 +1,73 @@
-# React + Vite
+# inSUREd
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ER insurance management platform for verifying patient coverage, estimating costs, and streamlining intake at the point of care.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Insurance card capture** — OCR-powered scanning (Tesseract.js) plus manual entry fallback
+- **Patient registration & directory** — intake forms with draft persistence
+- **Coverage lookup** — match scanned cards against the mock insurance database
+- **Billing calculator** — estimate patient responsibility using 2025–2026 ER pricing data (facility fee, physician fee, labs, imaging, procedures)
+- **Patient queue & scan history** — track active visits and prior scans
+- **Role-based auth** — session-timed login with audit logging
+- **AI assist** — Anthropic SDK integration for card parsing and workflow help
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React 19, React Router 7, Vite 8
+- **Backend:** Express 5 (Node), Multer for uploads, Sharp for image processing
+- **OCR:** Tesseract.js (`eng.traineddata` bundled)
+- **AI:** `@anthropic-ai/sdk`
+- **Lint:** ESLint 9
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+This runs the Express API server and the Vite dev client concurrently.
+
+### Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Start API server + Vite client together |
+| `npm run dev:client` | Vite client only |
+| `npm run dev:server` | Express server only |
+| `npm run build` | Production build |
+| `npm run preview` | Preview built bundle |
+| `npm run lint` | Run ESLint |
+
+### Environment
+
+Create a `.env` file in the project root:
+
+```
+ANTHROPIC_API_KEY=your_key_here
+```
+
+## Project Structure
+
+```
+server/           Express API (auth, uploads, billing, audit)
+src/
+  components/    UI (Dashboard, Scan, Billing, Registration, Queue, ...)
+  context/       AuthContext — session + role state
+  data/          Mock users, insurance plans, ER test/procedure pricing
+public/          Static assets
+```
+
+## Data
+
+The app ships with mock datasets used for development and demo:
+
+- `src/data/mockUsers.json` — staff accounts and roles
+- `src/data/mockInsurance.json` — plans, facility config, coverage rules
+- `src/data/er_tests.json` — ER tests/procedures with chargemaster, cash, and negotiated prices
+- `src/data/cards_by_member_id.json` — sample member card lookups
+
+## License
+
+Private / unreleased.
