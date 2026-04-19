@@ -408,6 +408,37 @@ function parseLicenseText(rawText) {
   return result;
 }
 
+const LICENSE_PROMPT = `You are extracting structured data from a US driver's license image.
+
+Each field on the license has a small AAMVA field-number printed next to it (1, 2, 3, 4a, 4b, 4d, 5, 8, 9, 12, 15, 16, 18). These numbers are field labels — they are NEVER part of the value. Example: "8 470 LAKEDALE DR" means field 8 (address) is "470 LAKEDALE DR".
+
+Field 1 = family name / last name.
+Field 2 = given name(s). The FIRST word on this line is the first name. If there is a SECOND word, it is the middle name.
+Field 3 or 4a = date of birth.
+Field 4d or "DL" label = driver's license / ID number.
+Field 8 = street address.
+Field 15 = sex/gender.
+
+IMPORTANT:
+- Read names CHARACTER BY CHARACTER. Do not guess. If a letter is ambiguous, pick the most likely real-name letter but do not substitute a more common spelling.
+- If field 2 contains a second word (middle name), middleName MUST be set to its first letter (uppercase). Only return middleName = "" if field 2 has a SINGLE word.
+- Strip any AAMVA field-number prefix from the address value.
+
+Return exactly one JSON object, no prose, no code fences, no trailing text:
+{
+  "firstName": "Title Case first name",
+  "middleName": "single uppercase letter, or empty string",
+  "lastName": "Title Case last name",
+  "dob": "YYYY-MM-DD",
+  "licenseNumber": "driver's license or ID number as printed, no field-number prefix",
+  "gender": "male" or "female",
+  "address": "street address, no field-number prefix",
+  "apt": "apt/suite number or empty string",
+  "city": "Title Case city",
+  "state": "2-letter state code",
+  "zipCode": "5-digit ZIP"
+}`;
+
 app.post('/api/scan-license', async (req, res) => {
   const { image } = req.body;
   if (!image) {
@@ -415,64 +446,73 @@ app.post('/api/scan-license', async (req, res) => {
   }
 
   try {
-    // Send image directly to Gemini via OpenRouter for extraction
-    const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: image },
+    const base64Match = image.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!base64Match) {
+      return res.status(400).json({ error: 'Invalid image format (expected data URL)' });
+    }
+
+    // Debug: persist most recent license image so it can be replayed without re-uploading
+    try {
+      const ext = base64Match[1].split('/')[1] || 'bin';
+      writeFileSync(`/tmp/last-license.${ext}`, base64Match[2], 'base64');
+      writeFileSync('/tmp/last-license.mediatype', base64Match[1]);
+    } catch (e) {
+      console.warn('Could not persist last license image:', e.message);
+    }
+
+    // Normalize: honor EXIF orientation, auto-rotate to landscape (licenses are
+    // wider than tall), downscale to keep payload small, re-encode as JPEG.
+    let normalizedBuf;
+    let normalizedMime = 'image/jpeg';
+    try {
+      const rawBuf = Buffer.from(base64Match[2], 'base64');
+      // Bake EXIF orientation into pixels first.
+      const oriented = await sharp(rawBuf, { failOn: 'none' }).rotate().jpeg({ quality: 95 }).toBuffer();
+      const orientedMeta = await sharp(oriented).metadata();
+      let pipeline = sharp(oriented);
+      if (orientedMeta.width && orientedMeta.height && orientedMeta.height > orientedMeta.width) {
+        // Portrait orientation — rotate 270° (counter-clockwise) to landscape.
+        pipeline = pipeline.rotate(270);
+      }
+      normalizedBuf = await pipeline
+        .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 90 })
+        .toBuffer();
+      writeFileSync('/tmp/last-license-normalized.jpeg', normalizedBuf);
+    } catch (e) {
+      console.warn('[scan-license] sharp normalize failed, using original:', e.message);
+      normalizedBuf = Buffer.from(base64Match[2], 'base64');
+      normalizedMime = base64Match[1];
+    }
+
+    const response = await anthropic.messages.create({
+      model: 'claude-opus-4-7',
+      max_tokens: 512,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: normalizedMime,
+              data: normalizedBuf.toString('base64'),
             },
-            {
-              type: 'text',
-              text: `Extract information from this US driver's license image and return a JSON object.
-
-IMPORTANT name rules for US driver's licenses:
-- The LAST NAME (family/surname) is on the FIRST name line (labeled "1" or "LN"). It is ABOVE the first name.
-- The FIRST NAME is the FIRST word on the SECOND name line (labeled "2" or "FN").
-- If there is a SECOND word on that line, it is the middle name. Return ONLY the first initial (e.g. "MURTAZA" → "M").
-
-Return ONLY a JSON object with these fields:
-{
-  "firstName": "first/given name in Title Case",
-  "middleName": "middle name INITIAL only (single letter) or empty string",
-  "lastName": "last/family name in Title Case",
-  "dob": "date of birth as YYYY-MM-DD",
-  "gender": "male or female",
-  "address": "street address",
-  "apt": "apartment number or empty string",
-  "city": "city name",
-  "state": "2-letter state code",
-  "zipCode": "5-digit ZIP code"
-}
-
-Return ONLY the JSON, no other text.`,
-            },
-          ],
-        }],
-        max_tokens: 512,
-      }),
+          },
+          { type: 'text', text: LICENSE_PROMPT },
+        ],
+      }],
     });
 
-    const orData = await orResponse.json();
-    console.log('OpenRouter response:', JSON.stringify(orData).substring(0, 500));
+    const aiText = response.content[0]?.text?.trim() || '';
+    console.log('[scan-license] Claude response:', aiText.substring(0, 800));
 
-    const aiText = orData.choices?.[0]?.message?.content?.trim() || '';
     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return res.status(500).json({ error: 'Could not extract license data' });
     }
 
     const extracted = JSON.parse(jsonMatch[0]);
-    // Ensure middle name is initial only
     if (extracted.middleName && extracted.middleName.length > 1) {
       extracted.middleName = extracted.middleName.charAt(0).toUpperCase();
     }

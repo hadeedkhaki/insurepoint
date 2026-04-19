@@ -5,7 +5,7 @@ import { readImageFile, IMAGE_ACCEPT } from '../utils/imageUpload';
 const emptyForm = {
   // Patient Information
   firstName: '', middleName: '', lastName: '',
-  dob: '', ssn: '', gender: '',
+  dob: '', licenseNumber: '', gender: '',
   address: '', apt: '', city: '', state: '', zipCode: '',
   phone: '', email: '',
   employer: '',
@@ -35,8 +35,21 @@ const emptyForm = {
 
 const STORAGE_KEY = 'insured_reg_draft';
 
+function isPageReload() {
+  try {
+    const nav = performance.getEntriesByType?.('navigation')?.[0];
+    return nav?.type === 'reload';
+  } catch { return false; }
+}
+
 function loadDraft() {
   try {
+    // Fresh page loads (reload or cold navigation) should start blank.
+    // Only keep the draft across in-app route transitions.
+    if (isPageReload()) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
   } catch { /* ignore */ }
@@ -140,6 +153,7 @@ export default function Registration() {
         lastName: data.lastName || prev.lastName,
         dob: data.dob || prev.dob,
         gender: data.gender || prev.gender,
+        licenseNumber: data.licenseNumber || prev.licenseNumber,
         address: data.address || prev.address,
         apt: data.apt || prev.apt,
         city: data.city || prev.city,
@@ -306,8 +320,12 @@ export default function Registration() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    let nextValue = type === 'checkbox' ? checked : value;
+    if (name === 'phone' || name === 'emergencyPhone') {
+      nextValue = value.replace(/\D/g, '').slice(0, 10);
+    }
     setForm(prev => {
-      const updated = { ...prev, [name]: type === 'checkbox' ? checked : value };
+      const updated = { ...prev, [name]: nextValue };
       // If "same as patient" is checked, copy patient info to insured
       if (name === 'insuredSameAsPatient' && checked) {
         updated.insuredFirstName = prev.firstName;
@@ -388,7 +406,7 @@ export default function Registration() {
   </div>
   <div class="row">
     <div class="field"><div class="field-label">Date of Birth</div><div class="field-value">${form.dob}</div></div>
-    <div class="field"><div class="field-label">SSN</div><div class="field-value">${form.ssn}</div></div>
+    <div class="field"><div class="field-label">DL / ID Number</div><div class="field-value">${form.licenseNumber}</div></div>
     <div class="field"><div class="field-label">Gender</div><div class="field-value">${genderLabel}</div></div>
   </div>
   <div class="row">
@@ -479,7 +497,7 @@ export default function Registration() {
       <div className="registration">
         <div className="reg-success">
           <div className="reg-success-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -575,7 +593,7 @@ export default function Registration() {
                 )}
                 {licenseScanned && (
                   <span className="license-success">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                     Fields auto-filled from license
@@ -619,8 +637,8 @@ export default function Registration() {
               <input id="dob" name="dob" type="date" value={form.dob} onChange={handleChange} required />
             </div>
             <div className="reg-field">
-              <label htmlFor="ssn">Social Security Number</label>
-              <input id="ssn" name="ssn" value={form.ssn} onChange={handleChange} placeholder="XXX-XX-XXXX" />
+              <label htmlFor="licenseNumber">DL / ID Number</label>
+              <input id="licenseNumber" name="licenseNumber" value={form.licenseNumber} onChange={handleChange} placeholder="Auto-filled from license scan" />
             </div>
             <div className="reg-field">
               <label htmlFor="gender">Gender <span className="req">*</span></label>
@@ -661,7 +679,7 @@ export default function Registration() {
           <div className="reg-row reg-row-2">
             <div className="reg-field">
               <label htmlFor="phone">Phone <span className="req">*</span></label>
-              <input id="phone" name="phone" type="tel" value={form.phone} onChange={handleChange} required placeholder="(214) 555-0100" />
+              <input id="phone" name="phone" type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} value={form.phone} onChange={handleChange} required placeholder="2145550100" />
             </div>
             <div className="reg-field">
               <label htmlFor="email">Email</label>
@@ -756,7 +774,7 @@ export default function Registration() {
             </div>
             <div className="reg-field">
               <label htmlFor="emergencyPhone">Phone Number <span className="req">*</span></label>
-              <input id="emergencyPhone" name="emergencyPhone" type="tel" value={form.emergencyPhone} onChange={handleChange} required />
+              <input id="emergencyPhone" name="emergencyPhone" type="tel" inputMode="numeric" pattern="[0-9]*" maxLength={10} value={form.emergencyPhone} onChange={handleChange} required placeholder="2145550100" />
             </div>
             <div className="reg-field">
               <label htmlFor="emergencyRelationship">Relationship <span className="req">*</span></label>
@@ -851,7 +869,7 @@ export default function Registration() {
                   )}
                   {insCardScanned && (
                     <span className="license-success">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                       Insurance fields auto-filled

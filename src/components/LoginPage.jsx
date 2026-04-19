@@ -33,7 +33,7 @@ export default function LoginPage() {
 
       <div className="login-center">
         <h1 className="brand-name">
-          <span className="brand-in">in</span>SURE<span className="brand-d">d</span>
+          <span className="brand-in">in</span><span className="brand-sure">SURE</span><span className="brand-d">d</span>
         </h1>
         <p className="brand-tagline">Scan. See. Sure.</p>
 

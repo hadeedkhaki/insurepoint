@@ -9,7 +9,7 @@ export default function Navigation() {
       <div className="header-top">
         <div className="header-content">
           <img src="/insured-icon.jpeg" alt="inSUREd" className="header-logo-img" />
-          <h1><span className="header-brand-in">in</span>SURE<span className="header-brand-d">d</span></h1>
+          <h1><span className="header-brand-in">in</span><span className="header-brand-sure">SURE</span><span className="header-brand-d">d</span></h1>
         </div>
         <div className="header-user">
           <div className="user-avatar">{user.name.split(' ').map(n => n[0]).join('')}</div>
