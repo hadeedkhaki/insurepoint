@@ -37,7 +37,7 @@ console.log(`Loaded ${Object.keys(allTests).length} ER test/procedure codes`);
 
 // ER facility config (hospital-level settings, not per-card)
 const erConfig = {
-  facilityName: 'InsurePoint Medical Center',
+  facilityName: 'inSUREd Medical Center',
   facilityFee: 1800,
   physicianFee: 450,
   avgERCost: 2250,

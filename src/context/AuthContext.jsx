@@ -23,8 +23,8 @@ export function AuthProvider({ children }) {
     const loggedOutUser = user;
     setUser(null);
     setSessionWarning(false);
-    localStorage.removeItem('insurepoint_user');
-    localStorage.removeItem('insurepoint_session_start');
+    localStorage.removeItem('insured_user');
+    localStorage.removeItem('insured_session_start');
 
     // Log the logout event
     if (loggedOutUser) {
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
     clearTimers();
 
     // Update last activity
-    localStorage.setItem('insurepoint_last_activity', Date.now().toString());
+    localStorage.setItem('insured_last_activity', Date.now().toString());
 
     // Set warning timer
     warningRef.current = setTimeout(() => {
@@ -81,21 +81,21 @@ export function AuthProvider({ children }) {
 
   // Load saved session on mount
   useEffect(() => {
-    const saved = localStorage.getItem('insurepoint_user');
-    const lastActivity = localStorage.getItem('insurepoint_last_activity');
+    const saved = localStorage.getItem('insured_user');
+    const lastActivity = localStorage.getItem('insured_last_activity');
 
     if (saved) {
       try {
         // Check if session has expired
         if (lastActivity && Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT) {
-          localStorage.removeItem('insurepoint_user');
-          localStorage.removeItem('insurepoint_session_start');
-          localStorage.removeItem('insurepoint_last_activity');
+          localStorage.removeItem('insured_user');
+          localStorage.removeItem('insured_session_start');
+          localStorage.removeItem('insured_last_activity');
         } else {
           setUser(JSON.parse(saved));
         }
       } catch {
-        localStorage.removeItem('insurepoint_user');
+        localStorage.removeItem('insured_user');
       }
     }
     setLoading(false);
@@ -115,9 +115,9 @@ export function AuthProvider({ children }) {
 
     const data = await res.json();
     setUser(data.user);
-    localStorage.setItem('insurepoint_user', JSON.stringify(data.user));
-    localStorage.setItem('insurepoint_session_start', Date.now().toString());
-    localStorage.setItem('insurepoint_last_activity', Date.now().toString());
+    localStorage.setItem('insured_user', JSON.stringify(data.user));
+    localStorage.setItem('insured_session_start', Date.now().toString());
+    localStorage.setItem('insured_last_activity', Date.now().toString());
 
     // Log login event
     fetch('/api/audit', {

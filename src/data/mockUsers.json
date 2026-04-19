@@ -1,7 +1,7 @@
 [
   {
     "id": "u1",
-    "email": "admin@insurepoint.com",
+    "email": "admin@insured.com",
     "password": "admin123",
     "name": "Dr. Sarah Chen",
     "role": "admin",

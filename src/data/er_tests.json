@@ -1,6 +1,6 @@
 {
   "_metadata": {
-    "description": "ER tests, procedures, imaging, labs, medications, and E&M codes with realistic 2025-2026 costs. Designed to pair with the InsurePoint mock insurance database.",
+    "description": "ER tests, procedures, imaging, labs, medications, and E&M codes with realistic 2025-2026 costs. Designed to pair with the inSUREd mock insurance database.",
     "price_structure": {
       "chargemaster_price": "Hospital list price (what uninsured patients see on the bill)",
       "cash_price": "Self-pay rate, typically 40-60% off chargemaster",

@@ -32,7 +32,7 @@ const emptyForm = {
   insuredApt: '',
 };
 
-const STORAGE_KEY = 'insurepoint_reg_draft';
+const STORAGE_KEY = 'insured_reg_draft';
 
 function loadDraft() {
   try {
