@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { readImageFile, IMAGE_ACCEPT } from '../utils/imageUpload';
 
 const emptyForm = {
   // Patient Information
@@ -69,16 +70,17 @@ export default function Registration() {
   const streamRef = useRef(null);
   const licenseInputRef = useRef(null);
 
-  const handleLicenseFile = (e) => {
+  const handleLicenseFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setLicensePreview(ev.target.result);
+    setLicenseError(null);
+    try {
+      const dataUrl = await readImageFile(file);
+      setLicensePreview(dataUrl);
       setLicenseScanned(false);
-      setLicenseError(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setLicenseError(err.message || 'Could not read image');
+    }
   };
 
   const startLicenseCamera = async () => {
@@ -205,20 +207,21 @@ export default function Registration() {
     return () => clearTimeout(timer);
   }, [form, licensePreview, licenseScanned, insCardPreview, insCardBack, insCardScanned, submitted]);
 
-  const handleInsCardFile = (e) => {
+  const handleInsCardFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
+    setInsCardError(null);
+    try {
+      const dataUrl = await readImageFile(file);
       if (insCardSide === 'front') {
-        setInsCardPreview(ev.target.result);
+        setInsCardPreview(dataUrl);
       } else {
-        setInsCardBack(ev.target.result);
+        setInsCardBack(dataUrl);
       }
       setInsCardScanned(false);
-      setInsCardError(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setInsCardError(err.message || 'Could not read image');
+    }
   };
 
   const startInsCardCamera = async () => {
@@ -528,7 +531,7 @@ export default function Registration() {
                 <input
                   ref={licenseInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT}
                   onChange={handleLicenseFile}
                   hidden
                 />
@@ -799,7 +802,7 @@ export default function Registration() {
                   <input
                     ref={insCardInputRef}
                     type="file"
-                    accept="image/*"
+                    accept={IMAGE_ACCEPT}
                     onChange={handleInsCardFile}
                     hidden
                   />

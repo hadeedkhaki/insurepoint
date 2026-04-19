@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { readImageFile, IMAGE_ACCEPT } from '../utils/imageUpload';
 
 export default function ImageCapture({ onImageReady, disabled }) {
   const [frontPreview, setFrontPreview] = useState(null);
@@ -9,20 +10,21 @@ export default function ImageCapture({ onImageReady, disabled }) {
   const streamRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
+    try {
+      const dataUrl = await readImageFile(file);
       if (activeSide === 'front') {
-        setFrontPreview(ev.target.result);
-        onImageReady(ev.target.result, backPreview);
+        setFrontPreview(dataUrl);
+        onImageReady(dataUrl, backPreview);
       } else {
-        setBackPreview(ev.target.result);
-        onImageReady(frontPreview, ev.target.result);
+        setBackPreview(dataUrl);
+        onImageReady(frontPreview, dataUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      alert(err.message || 'Could not read image');
+    }
   };
 
   const startCamera = async () => {
@@ -101,7 +103,7 @@ export default function ImageCapture({ onImageReady, disabled }) {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_ACCEPT}
               onChange={handleFile}
               hidden
               disabled={disabled}
