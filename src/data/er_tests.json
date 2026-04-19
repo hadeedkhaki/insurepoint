@@ -1,0 +1,1029 @@
+{
+  "_metadata": {
+    "description": "ER tests, procedures, imaging, labs, medications, and E&M codes with realistic 2025-2026 costs. Designed to pair with the InsurePoint mock insurance database.",
+    "price_structure": {
+      "chargemaster_price": "Hospital list price (what uninsured patients see on the bill)",
+      "cash_price": "Self-pay rate, typically 40-60% off chargemaster",
+      "insurance_negotiated_rate": "What most commercial insurers actually pay — roughly 40-50% of chargemaster",
+      "medicare_rate": "Medicare fee schedule — typically 25-35% of chargemaster",
+      "medicaid_rate": "Texas Medicaid rate — typically 15-25% of chargemaster"
+    },
+    "source": "Derived from published chargemaster data, CMS fee schedules, and public price transparency data (Turquoise Health, Taven Health, hospital MRFs).",
+    "disclaimer": "All prices are representative averages for demo use. Real pricing varies by hospital, region, and payer contract."
+  },
+  "categories": {
+    "evaluation_and_management": {
+      "description": "ER visit level codes — the 'facility fee' for being seen. Every ER visit includes one of these. Level is determined by complexity of medical decision-making.",
+      "tests": {
+        "99281": {
+          "name": "ER Visit Level 1 — Minor",
+          "description": "Minor problem, self-limited (minor cold, small cut needing bandage). Minimal exam.",
+          "chargemaster_price": 485,
+          "cash_price": 240,
+          "insurance_negotiated_rate": 201,
+          "medicare_rate": 145,
+          "medicaid_rate": 95
+        },
+        "99282": {
+          "name": "ER Visit Level 2 — Low Severity",
+          "description": "Low severity. Uncomplicated symptoms, limited exam.",
+          "chargemaster_price": 850,
+          "cash_price": 425,
+          "insurance_negotiated_rate": 385,
+          "medicare_rate": 240,
+          "medicaid_rate": 165
+        },
+        "99283": {
+          "name": "ER Visit Level 3 — Moderate Severity",
+          "description": "Moderate complexity, expanded exam, diagnostic tests needed. Common ER level.",
+          "chargemaster_price": 1680,
+          "cash_price": 780,
+          "insurance_negotiated_rate": 640,
+          "medicare_rate": 395,
+          "medicaid_rate": 255
+        },
+        "99284": {
+          "name": "ER Visit Level 4 — High Severity",
+          "description": "High severity — suspected appendicitis, chest pain workup, fractures with imaging. Most common ER billing level.",
+          "chargemaster_price": 2450,
+          "cash_price": 1150,
+          "insurance_negotiated_rate": 925,
+          "medicare_rate": 580,
+          "medicaid_rate": 380
+        },
+        "99285": {
+          "name": "ER Visit Level 5 — Life-Threatening",
+          "description": "Critical emergencies — heart attack, stroke, major trauma, severe respiratory distress.",
+          "chargemaster_price": 3100,
+          "cash_price": 1550,
+          "insurance_negotiated_rate": 1250,
+          "medicare_rate": 785,
+          "medicaid_rate": 520
+        },
+        "99291": {
+          "name": "Critical Care — First 30–74 Minutes",
+          "description": "Critical care services, first hour. Billed in addition to ER visit code when patient is critically ill.",
+          "chargemaster_price": 1850,
+          "cash_price": 925,
+          "insurance_negotiated_rate": 750,
+          "medicare_rate": 475,
+          "medicaid_rate": 310
+        },
+        "99292": {
+          "name": "Critical Care — Additional 30 Minutes",
+          "description": "Each additional 30 minutes of critical care beyond the first hour.",
+          "chargemaster_price": 925,
+          "cash_price": 465,
+          "insurance_negotiated_rate": 375,
+          "medicare_rate": 240,
+          "medicaid_rate": 155
+        }
+      }
+    },
+    "labs": {
+      "description": "Common ER laboratory tests — blood draws, chemistry panels, urinalysis, cultures.",
+      "tests": {
+        "36415": {
+          "name": "Venipuncture (Blood Draw)",
+          "description": "Routine blood draw via needle. Billed once per encounter regardless of tubes drawn.",
+          "chargemaster_price": 55,
+          "cash_price": 28,
+          "insurance_negotiated_rate": 22,
+          "medicare_rate": 14,
+          "medicaid_rate": 8
+        },
+        "80048": {
+          "name": "Basic Metabolic Panel (BMP)",
+          "description": "Electrolytes, glucose, BUN, creatinine, calcium.",
+          "chargemaster_price": 145,
+          "cash_price": 68,
+          "insurance_negotiated_rate": 55,
+          "medicare_rate": 32,
+          "medicaid_rate": 18
+        },
+        "80053": {
+          "name": "Comprehensive Metabolic Panel (CMP)",
+          "description": "BMP plus liver function tests (AST, ALT, albumin, total protein, bilirubin).",
+          "chargemaster_price": 195,
+          "cash_price": 92,
+          "insurance_negotiated_rate": 75,
+          "medicare_rate": 44,
+          "medicaid_rate": 25
+        },
+        "85025": {
+          "name": "CBC with Differential",
+          "description": "Complete Blood Count with WBC differential. Checks for infection, anemia, clotting issues.",
+          "chargemaster_price": 165,
+          "cash_price": 78,
+          "insurance_negotiated_rate": 62,
+          "medicare_rate": 36,
+          "medicaid_rate": 21
+        },
+        "85027": {
+          "name": "CBC without Differential",
+          "description": "Complete Blood Count, automated.",
+          "chargemaster_price": 115,
+          "cash_price": 54,
+          "insurance_negotiated_rate": 43,
+          "medicare_rate": 25,
+          "medicaid_rate": 14
+        },
+        "85610": {
+          "name": "Prothrombin Time (PT/INR)",
+          "description": "Bleeding/clotting assessment. Required for patients on blood thinners.",
+          "chargemaster_price": 95,
+          "cash_price": 48,
+          "insurance_negotiated_rate": 38,
+          "medicare_rate": 23,
+          "medicaid_rate": 13
+        },
+        "85730": {
+          "name": "Partial Thromboplastin Time (PTT)",
+          "description": "Clotting assessment, often paired with PT.",
+          "chargemaster_price": 95,
+          "cash_price": 48,
+          "insurance_negotiated_rate": 38,
+          "medicare_rate": 23,
+          "medicaid_rate": 13
+        },
+        "84484": {
+          "name": "Troponin I",
+          "description": "Cardiac biomarker — elevated in heart attacks. Often serially drawn.",
+          "chargemaster_price": 210,
+          "cash_price": 98,
+          "insurance_negotiated_rate": 80,
+          "medicare_rate": 48,
+          "medicaid_rate": 28
+        },
+        "83874": {
+          "name": "Myoglobin",
+          "description": "Early cardiac marker, rises before troponin.",
+          "chargemaster_price": 175,
+          "cash_price": 82,
+          "insurance_negotiated_rate": 66,
+          "medicare_rate": 40,
+          "medicaid_rate": 23
+        },
+        "82550": {
+          "name": "Creatine Kinase (CK)",
+          "description": "Cardiac/muscle enzyme marker.",
+          "chargemaster_price": 130,
+          "cash_price": 62,
+          "insurance_negotiated_rate": 50,
+          "medicare_rate": 30,
+          "medicaid_rate": 17
+        },
+        "85379": {
+          "name": "D-Dimer",
+          "description": "Clot breakdown product. Used to rule out pulmonary embolism and DVT.",
+          "chargemaster_price": 225,
+          "cash_price": 105,
+          "insurance_negotiated_rate": 85,
+          "medicare_rate": 52,
+          "medicaid_rate": 30
+        },
+        "83615": {
+          "name": "Lactate Dehydrogenase (LDH)",
+          "description": "General tissue damage marker.",
+          "chargemaster_price": 115,
+          "cash_price": 54,
+          "insurance_negotiated_rate": 43,
+          "medicare_rate": 26,
+          "medicaid_rate": 15
+        },
+        "82803": {
+          "name": "Arterial Blood Gas (ABG)",
+          "description": "Oxygen, CO2, pH. Used in respiratory distress, shock.",
+          "chargemaster_price": 285,
+          "cash_price": 135,
+          "insurance_negotiated_rate": 108,
+          "medicare_rate": 65,
+          "medicaid_rate": 38
+        },
+        "83036": {
+          "name": "Hemoglobin A1c",
+          "description": "3-month blood sugar average. Used in diabetic workup.",
+          "chargemaster_price": 135,
+          "cash_price": 64,
+          "insurance_negotiated_rate": 52,
+          "medicare_rate": 31,
+          "medicaid_rate": 18
+        },
+        "82947": {
+          "name": "Glucose (Fingerstick or Lab)",
+          "description": "Blood sugar measurement.",
+          "chargemaster_price": 45,
+          "cash_price": 22,
+          "insurance_negotiated_rate": 18,
+          "medicare_rate": 11,
+          "medicaid_rate": 6
+        },
+        "84443": {
+          "name": "Thyroid Stimulating Hormone (TSH)",
+          "description": "Thyroid function. Used in altered mental status, arrhythmia workups.",
+          "chargemaster_price": 165,
+          "cash_price": 78,
+          "insurance_negotiated_rate": 62,
+          "medicare_rate": 37,
+          "medicaid_rate": 21
+        },
+        "80061": {
+          "name": "Lipid Panel",
+          "description": "Cholesterol, triglycerides, HDL, LDL.",
+          "chargemaster_price": 155,
+          "cash_price": 72,
+          "insurance_negotiated_rate": 58,
+          "medicare_rate": 35,
+          "medicaid_rate": 20
+        },
+        "81001": {
+          "name": "Urinalysis with Microscopy",
+          "description": "Urine dipstick plus microscopic exam. Checks for UTI, kidney issues, dehydration.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "81025": {
+          "name": "Pregnancy Test (Urine)",
+          "description": "Urine hCG. Required before imaging or certain meds in women of reproductive age.",
+          "chargemaster_price": 65,
+          "cash_price": 32,
+          "insurance_negotiated_rate": 25,
+          "medicare_rate": 15,
+          "medicaid_rate": 9
+        },
+        "84702": {
+          "name": "Pregnancy Test (Blood, Quantitative)",
+          "description": "Serum hCG quantitative. Used in early pregnancy concerns, ectopic pregnancy workup.",
+          "chargemaster_price": 145,
+          "cash_price": 68,
+          "insurance_negotiated_rate": 55,
+          "medicare_rate": 33,
+          "medicaid_rate": 19
+        },
+        "80307": {
+          "name": "Drug Screen (Urine, Multiple Classes)",
+          "description": "Urine toxicology screen. Used in altered mental status, overdose concerns.",
+          "chargemaster_price": 325,
+          "cash_price": 155,
+          "insurance_negotiated_rate": 125,
+          "medicare_rate": 75,
+          "medicaid_rate": 42
+        },
+        "82075": {
+          "name": "Alcohol (Blood)",
+          "description": "Blood alcohol level.",
+          "chargemaster_price": 135,
+          "cash_price": 64,
+          "insurance_negotiated_rate": 52,
+          "medicare_rate": 31,
+          "medicaid_rate": 18
+        },
+        "87880": {
+          "name": "Strep Test (Rapid)",
+          "description": "Group A strep rapid antigen. For sore throat workup.",
+          "chargemaster_price": 85,
+          "cash_price": 42,
+          "insurance_negotiated_rate": 32,
+          "medicare_rate": 20,
+          "medicaid_rate": 11
+        },
+        "87804": {
+          "name": "Influenza A/B Rapid Test",
+          "description": "Flu test at the bedside.",
+          "chargemaster_price": 125,
+          "cash_price": 58,
+          "insurance_negotiated_rate": 47,
+          "medicare_rate": 28,
+          "medicaid_rate": 16
+        },
+        "87635": {
+          "name": "COVID-19 PCR Test",
+          "description": "SARS-CoV-2 detection by PCR.",
+          "chargemaster_price": 185,
+          "cash_price": 88,
+          "insurance_negotiated_rate": 70,
+          "medicare_rate": 42,
+          "medicaid_rate": 24
+        },
+        "87070": {
+          "name": "Bacterial Culture",
+          "description": "Culture of blood, urine, wound, or other specimen.",
+          "chargemaster_price": 195,
+          "cash_price": 92,
+          "insurance_negotiated_rate": 75,
+          "medicare_rate": 44,
+          "medicaid_rate": 25
+        },
+        "86140": {
+          "name": "C-Reactive Protein (CRP)",
+          "description": "Inflammation marker.",
+          "chargemaster_price": 125,
+          "cash_price": 58,
+          "insurance_negotiated_rate": 47,
+          "medicare_rate": 28,
+          "medicaid_rate": 16
+        },
+        "85652": {
+          "name": "Sedimentation Rate (ESR)",
+          "description": "Nonspecific inflammation marker.",
+          "chargemaster_price": 85,
+          "cash_price": 40,
+          "insurance_negotiated_rate": 32,
+          "medicare_rate": 19,
+          "medicaid_rate": 11
+        },
+        "83970": {
+          "name": "Parathyroid Hormone (PTH)",
+          "description": "Calcium regulation marker.",
+          "chargemaster_price": 185,
+          "cash_price": 88,
+          "insurance_negotiated_rate": 70,
+          "medicare_rate": 42,
+          "medicaid_rate": 24
+        }
+      }
+    },
+    "imaging_xray": {
+      "description": "Plain film X-ray imaging.",
+      "tests": {
+        "71045": {
+          "name": "Chest X-Ray, 1 View",
+          "description": "Single view chest radiograph.",
+          "chargemaster_price": 285,
+          "cash_price": 135,
+          "insurance_negotiated_rate": 108,
+          "medicare_rate": 62,
+          "medicaid_rate": 35
+        },
+        "71046": {
+          "name": "Chest X-Ray, 2 Views",
+          "description": "Two-view (PA and lateral) chest radiograph. Standard chest imaging.",
+          "chargemaster_price": 345,
+          "cash_price": 165,
+          "insurance_negotiated_rate": 132,
+          "medicare_rate": 78,
+          "medicaid_rate": 44
+        },
+        "73030": {
+          "name": "Shoulder X-Ray, Complete",
+          "description": "Minimum 2 views of shoulder.",
+          "chargemaster_price": 325,
+          "cash_price": 155,
+          "insurance_negotiated_rate": 124,
+          "medicare_rate": 73,
+          "medicaid_rate": 41
+        },
+        "73130": {
+          "name": "Hand X-Ray, 3 Views",
+          "description": "Hand radiograph, minimum 3 views.",
+          "chargemaster_price": 265,
+          "cash_price": 125,
+          "insurance_negotiated_rate": 100,
+          "medicare_rate": 59,
+          "medicaid_rate": 33
+        },
+        "73560": {
+          "name": "Knee X-Ray, 1–2 Views",
+          "description": "Knee radiograph.",
+          "chargemaster_price": 285,
+          "cash_price": 135,
+          "insurance_negotiated_rate": 108,
+          "medicare_rate": 64,
+          "medicaid_rate": 36
+        },
+        "73610": {
+          "name": "Ankle X-Ray, 3 Views",
+          "description": "Ankle radiograph, 3 views.",
+          "chargemaster_price": 275,
+          "cash_price": 130,
+          "insurance_negotiated_rate": 104,
+          "medicare_rate": 61,
+          "medicaid_rate": 34
+        },
+        "73630": {
+          "name": "Foot X-Ray, 3 Views",
+          "description": "Foot radiograph, 3 views.",
+          "chargemaster_price": 265,
+          "cash_price": 125,
+          "insurance_negotiated_rate": 100,
+          "medicare_rate": 59,
+          "medicaid_rate": 33
+        },
+        "72100": {
+          "name": "Lumbar Spine X-Ray, 2–3 Views",
+          "description": "Lower back X-ray.",
+          "chargemaster_price": 345,
+          "cash_price": 165,
+          "insurance_negotiated_rate": 132,
+          "medicare_rate": 78,
+          "medicaid_rate": 44
+        },
+        "72040": {
+          "name": "Cervical Spine X-Ray, 2–3 Views",
+          "description": "Neck X-ray, often for trauma clearance.",
+          "chargemaster_price": 325,
+          "cash_price": 155,
+          "insurance_negotiated_rate": 124,
+          "medicare_rate": 73,
+          "medicaid_rate": 41
+        },
+        "74018": {
+          "name": "Abdomen X-Ray, 1 View",
+          "description": "KUB (kidneys, ureters, bladder) film.",
+          "chargemaster_price": 285,
+          "cash_price": 135,
+          "insurance_negotiated_rate": 108,
+          "medicare_rate": 64,
+          "medicaid_rate": 36
+        }
+      }
+    },
+    "imaging_ct": {
+      "description": "Computed tomography. Higher cost, often requires prior auth outside emergencies.",
+      "tests": {
+        "70450": {
+          "name": "CT Head without Contrast",
+          "description": "Head CT. Standard imaging for head trauma, stroke rule-out, altered mental status.",
+          "chargemaster_price": 1450,
+          "cash_price": 680,
+          "insurance_negotiated_rate": 540,
+          "medicare_rate": 320,
+          "medicaid_rate": 180
+        },
+        "70460": {
+          "name": "CT Head with Contrast",
+          "description": "Head CT with IV contrast. Used for tumor, abscess workup.",
+          "chargemaster_price": 1850,
+          "cash_price": 875,
+          "insurance_negotiated_rate": 695,
+          "medicare_rate": 415,
+          "medicaid_rate": 230
+        },
+        "71250": {
+          "name": "CT Chest without Contrast",
+          "description": "Chest CT. Used for pneumonia, nodule, trauma.",
+          "chargemaster_price": 1650,
+          "cash_price": 785,
+          "insurance_negotiated_rate": 625,
+          "medicare_rate": 370,
+          "medicaid_rate": 210
+        },
+        "71260": {
+          "name": "CT Chest with Contrast",
+          "description": "Chest CT with IV contrast. Used for PE rule-out, aortic dissection.",
+          "chargemaster_price": 2100,
+          "cash_price": 1000,
+          "insurance_negotiated_rate": 795,
+          "medicare_rate": 475,
+          "medicaid_rate": 265
+        },
+        "71275": {
+          "name": "CT Angiography Chest",
+          "description": "CTA chest. Gold standard for pulmonary embolism.",
+          "chargemaster_price": 2650,
+          "cash_price": 1250,
+          "insurance_negotiated_rate": 1000,
+          "medicare_rate": 595,
+          "medicaid_rate": 335
+        },
+        "74150": {
+          "name": "CT Abdomen without Contrast",
+          "description": "Abdominal CT without contrast.",
+          "chargemaster_price": 1950,
+          "cash_price": 925,
+          "insurance_negotiated_rate": 740,
+          "medicare_rate": 440,
+          "medicaid_rate": 245
+        },
+        "74160": {
+          "name": "CT Abdomen with Contrast",
+          "description": "Abdominal CT with IV contrast.",
+          "chargemaster_price": 2450,
+          "cash_price": 1150,
+          "insurance_negotiated_rate": 920,
+          "medicare_rate": 550,
+          "medicaid_rate": 310
+        },
+        "74177": {
+          "name": "CT Abdomen and Pelvis with Contrast",
+          "description": "Abdomen/pelvis CT with IV contrast. Workhorse for abdominal pain, appendicitis, trauma.",
+          "chargemaster_price": 2850,
+          "cash_price": 1350,
+          "insurance_negotiated_rate": 1080,
+          "medicare_rate": 645,
+          "medicaid_rate": 360
+        },
+        "74176": {
+          "name": "CT Abdomen and Pelvis without Contrast",
+          "description": "Abdomen/pelvis CT without contrast. Used for kidney stone evaluation.",
+          "chargemaster_price": 2350,
+          "cash_price": 1115,
+          "insurance_negotiated_rate": 890,
+          "medicare_rate": 530,
+          "medicaid_rate": 295
+        },
+        "70490": {
+          "name": "CT Neck Soft Tissue with Contrast",
+          "description": "Neck CT. Used for abscess, deep space infection.",
+          "chargemaster_price": 1950,
+          "cash_price": 925,
+          "insurance_negotiated_rate": 740,
+          "medicare_rate": 440,
+          "medicaid_rate": 245
+        },
+        "72128": {
+          "name": "CT Thoracic Spine without Contrast",
+          "description": "Thoracic spine CT.",
+          "chargemaster_price": 1750,
+          "cash_price": 830,
+          "insurance_negotiated_rate": 665,
+          "medicare_rate": 395,
+          "medicaid_rate": 220
+        },
+        "72131": {
+          "name": "CT Lumbar Spine without Contrast",
+          "description": "Lumbar spine CT.",
+          "chargemaster_price": 1750,
+          "cash_price": 830,
+          "insurance_negotiated_rate": 665,
+          "medicare_rate": 395,
+          "medicaid_rate": 220
+        }
+      }
+    },
+    "imaging_mri": {
+      "description": "Magnetic resonance imaging. Highest-cost imaging, almost always requires prior auth.",
+      "tests": {
+        "70551": {
+          "name": "MRI Brain without Contrast",
+          "description": "Brain MRI. Used for stroke (DWI), seizure, tumor.",
+          "chargemaster_price": 3250,
+          "cash_price": 1540,
+          "insurance_negotiated_rate": 1235,
+          "medicare_rate": 735,
+          "medicaid_rate": 410
+        },
+        "70553": {
+          "name": "MRI Brain with and without Contrast",
+          "description": "Brain MRI with and without gadolinium. Used for tumor, MS, infection workup.",
+          "chargemaster_price": 4100,
+          "cash_price": 1950,
+          "insurance_negotiated_rate": 1560,
+          "medicare_rate": 925,
+          "medicaid_rate": 520
+        },
+        "72148": {
+          "name": "MRI Lumbar Spine without Contrast",
+          "description": "Lumbar MRI. Used for disc herniation, cord compression, cauda equina workup.",
+          "chargemaster_price": 3100,
+          "cash_price": 1470,
+          "insurance_negotiated_rate": 1175,
+          "medicare_rate": 700,
+          "medicaid_rate": 390
+        },
+        "72141": {
+          "name": "MRI Cervical Spine without Contrast",
+          "description": "Neck MRI.",
+          "chargemaster_price": 3100,
+          "cash_price": 1470,
+          "insurance_negotiated_rate": 1175,
+          "medicare_rate": 700,
+          "medicaid_rate": 390
+        },
+        "73721": {
+          "name": "MRI Knee without Contrast",
+          "description": "Knee MRI. Ligament/meniscus evaluation.",
+          "chargemaster_price": 2850,
+          "cash_price": 1350,
+          "insurance_negotiated_rate": 1080,
+          "medicare_rate": 645,
+          "medicaid_rate": 360
+        },
+        "74181": {
+          "name": "MRI Abdomen without Contrast",
+          "description": "Abdominal MRI.",
+          "chargemaster_price": 3450,
+          "cash_price": 1635,
+          "insurance_negotiated_rate": 1310,
+          "medicare_rate": 780,
+          "medicaid_rate": 435
+        }
+      }
+    },
+    "imaging_ultrasound": {
+      "description": "Ultrasound imaging. No radiation, lower cost, bedside-capable.",
+      "tests": {
+        "76700": {
+          "name": "Ultrasound Abdomen, Complete",
+          "description": "Complete abdominal ultrasound. Used for gallstones, liver, appendicitis.",
+          "chargemaster_price": 695,
+          "cash_price": 330,
+          "insurance_negotiated_rate": 265,
+          "medicare_rate": 155,
+          "medicaid_rate": 88
+        },
+        "76705": {
+          "name": "Ultrasound Abdomen, Limited",
+          "description": "Focused abdominal ultrasound (e.g., right upper quadrant for gallbladder only).",
+          "chargemaster_price": 485,
+          "cash_price": 230,
+          "insurance_negotiated_rate": 185,
+          "medicare_rate": 110,
+          "medicaid_rate": 62
+        },
+        "76856": {
+          "name": "Ultrasound Pelvis, Complete (Non-OB)",
+          "description": "Pelvic ultrasound, non-pregnancy.",
+          "chargemaster_price": 585,
+          "cash_price": 280,
+          "insurance_negotiated_rate": 222,
+          "medicare_rate": 132,
+          "medicaid_rate": 74
+        },
+        "76817": {
+          "name": "Ultrasound OB, Transvaginal",
+          "description": "Transvaginal OB ultrasound. Used for ectopic rule-out, early pregnancy workup.",
+          "chargemaster_price": 625,
+          "cash_price": 295,
+          "insurance_negotiated_rate": 237,
+          "medicare_rate": 141,
+          "medicaid_rate": 79
+        },
+        "93306": {
+          "name": "Echocardiogram, Complete",
+          "description": "Heart ultrasound with Doppler. Used for cardiac workup.",
+          "chargemaster_price": 1250,
+          "cash_price": 595,
+          "insurance_negotiated_rate": 475,
+          "medicare_rate": 285,
+          "medicaid_rate": 160
+        },
+        "76775": {
+          "name": "Ultrasound Retroperitoneal, Limited",
+          "description": "Kidney/retroperitoneal ultrasound. Used for hydronephrosis.",
+          "chargemaster_price": 485,
+          "cash_price": 230,
+          "insurance_negotiated_rate": 185,
+          "medicare_rate": 110,
+          "medicaid_rate": 62
+        },
+        "76870": {
+          "name": "Ultrasound Scrotum",
+          "description": "Testicular ultrasound. Used for torsion rule-out.",
+          "chargemaster_price": 545,
+          "cash_price": 260,
+          "insurance_negotiated_rate": 208,
+          "medicare_rate": 124,
+          "medicaid_rate": 69
+        },
+        "93971": {
+          "name": "Venous Duplex (Unilateral)",
+          "description": "Leg vein ultrasound. Used for DVT rule-out.",
+          "chargemaster_price": 725,
+          "cash_price": 345,
+          "insurance_negotiated_rate": 275,
+          "medicare_rate": 165,
+          "medicaid_rate": 92
+        }
+      }
+    },
+    "cardiac": {
+      "description": "Cardiac diagnostics.",
+      "tests": {
+        "93000": {
+          "name": "EKG 12-Lead with Interpretation",
+          "description": "Standard electrocardiogram. Routine for chest pain, syncope, palpitations.",
+          "chargemaster_price": 245,
+          "cash_price": 115,
+          "insurance_negotiated_rate": 92,
+          "medicare_rate": 54,
+          "medicaid_rate": 30
+        },
+        "93005": {
+          "name": "EKG 12-Lead, Tracing Only",
+          "description": "EKG performed, interpretation billed separately.",
+          "chargemaster_price": 125,
+          "cash_price": 58,
+          "insurance_negotiated_rate": 47,
+          "medicare_rate": 28,
+          "medicaid_rate": 16
+        },
+        "93010": {
+          "name": "EKG Interpretation Only",
+          "description": "Interpretation of EKG performed elsewhere.",
+          "chargemaster_price": 125,
+          "cash_price": 58,
+          "insurance_negotiated_rate": 47,
+          "medicare_rate": 28,
+          "medicaid_rate": 16
+        }
+      }
+    },
+    "procedures": {
+      "description": "Therapeutic procedures commonly performed in the ER.",
+      "tests": {
+        "12001": {
+          "name": "Simple Laceration Repair (≤2.5 cm)",
+          "description": "Simple suture repair of scalp, neck, trunk, extremity laceration.",
+          "chargemaster_price": 485,
+          "cash_price": 230,
+          "insurance_negotiated_rate": 185,
+          "medicare_rate": 110,
+          "medicaid_rate": 62
+        },
+        "12002": {
+          "name": "Simple Laceration Repair (2.6–7.5 cm)",
+          "description": "Simple suture repair.",
+          "chargemaster_price": 625,
+          "cash_price": 295,
+          "insurance_negotiated_rate": 237,
+          "medicare_rate": 141,
+          "medicaid_rate": 79
+        },
+        "12011": {
+          "name": "Simple Facial Laceration Repair (≤2.5 cm)",
+          "description": "Facial laceration repair.",
+          "chargemaster_price": 585,
+          "cash_price": 280,
+          "insurance_negotiated_rate": 222,
+          "medicare_rate": 132,
+          "medicaid_rate": 74
+        },
+        "29125": {
+          "name": "Short Arm Splint",
+          "description": "Forearm/wrist splint application.",
+          "chargemaster_price": 285,
+          "cash_price": 135,
+          "insurance_negotiated_rate": 108,
+          "medicare_rate": 64,
+          "medicaid_rate": 36
+        },
+        "29515": {
+          "name": "Short Leg Splint",
+          "description": "Lower leg splint application.",
+          "chargemaster_price": 325,
+          "cash_price": 155,
+          "insurance_negotiated_rate": 124,
+          "medicare_rate": 73,
+          "medicaid_rate": 41
+        },
+        "29075": {
+          "name": "Short Arm Cast",
+          "description": "Below-elbow cast.",
+          "chargemaster_price": 395,
+          "cash_price": 185,
+          "insurance_negotiated_rate": 150,
+          "medicare_rate": 89,
+          "medicaid_rate": 50
+        },
+        "30901": {
+          "name": "Nasal Packing for Epistaxis, Anterior, Simple",
+          "description": "Nosebleed control with anterior packing.",
+          "chargemaster_price": 385,
+          "cash_price": 180,
+          "insurance_negotiated_rate": 145,
+          "medicare_rate": 86,
+          "medicaid_rate": 48
+        },
+        "10060": {
+          "name": "Incision and Drainage of Abscess, Simple",
+          "description": "I&D of skin abscess (single/simple).",
+          "chargemaster_price": 495,
+          "cash_price": 235,
+          "insurance_negotiated_rate": 188,
+          "medicare_rate": 112,
+          "medicaid_rate": 63
+        },
+        "31500": {
+          "name": "Endotracheal Intubation",
+          "description": "Emergency airway intubation.",
+          "chargemaster_price": 685,
+          "cash_price": 325,
+          "insurance_negotiated_rate": 260,
+          "medicare_rate": 155,
+          "medicaid_rate": 87
+        },
+        "92950": {
+          "name": "CPR (Cardiopulmonary Resuscitation)",
+          "description": "Cardiopulmonary resuscitation.",
+          "chargemaster_price": 795,
+          "cash_price": 375,
+          "insurance_negotiated_rate": 302,
+          "medicare_rate": 180,
+          "medicaid_rate": 100
+        },
+        "36556": {
+          "name": "Central Venous Catheter Placement",
+          "description": "Central line placement (≥5 years old).",
+          "chargemaster_price": 925,
+          "cash_price": 440,
+          "insurance_negotiated_rate": 352,
+          "medicare_rate": 210,
+          "medicaid_rate": 118
+        },
+        "51701": {
+          "name": "Urinary Catheter (Straight)",
+          "description": "Straight cath for urine collection.",
+          "chargemaster_price": 185,
+          "cash_price": 88,
+          "insurance_negotiated_rate": 70,
+          "medicare_rate": 42,
+          "medicaid_rate": 24
+        },
+        "51702": {
+          "name": "Urinary Catheter (Foley)",
+          "description": "Foley catheter insertion.",
+          "chargemaster_price": 225,
+          "cash_price": 105,
+          "insurance_negotiated_rate": 85,
+          "medicare_rate": 51,
+          "medicaid_rate": 28
+        }
+      }
+    },
+    "medications": {
+      "description": "Common ER medications. Priced per standard dose administered.",
+      "tests": {
+        "J0131": {
+          "name": "Acetaminophen IV (Ofirmev) 1000mg",
+          "description": "IV acetaminophen.",
+          "chargemaster_price": 165,
+          "cash_price": 78,
+          "insurance_negotiated_rate": 62,
+          "medicare_rate": 37,
+          "medicaid_rate": 21
+        },
+        "J1885": {
+          "name": "Ketorolac (Toradol) 30mg IV/IM",
+          "description": "NSAID for moderate/severe pain.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "J2270": {
+          "name": "Morphine Sulfate 10mg IV/IM",
+          "description": "Opioid analgesic.",
+          "chargemaster_price": 85,
+          "cash_price": 40,
+          "insurance_negotiated_rate": 32,
+          "medicare_rate": 19,
+          "medicaid_rate": 11
+        },
+        "J3010": {
+          "name": "Fentanyl 100mcg IV",
+          "description": "Short-acting opioid analgesic.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "J2405": {
+          "name": "Ondansetron (Zofran) 4mg IV",
+          "description": "Anti-nausea medication.",
+          "chargemaster_price": 85,
+          "cash_price": 40,
+          "insurance_negotiated_rate": 32,
+          "medicare_rate": 19,
+          "medicaid_rate": 11
+        },
+        "J1200": {
+          "name": "Diphenhydramine (Benadryl) 50mg IV/IM",
+          "description": "Antihistamine for allergic reaction.",
+          "chargemaster_price": 75,
+          "cash_price": 35,
+          "insurance_negotiated_rate": 28,
+          "medicare_rate": 17,
+          "medicaid_rate": 10
+        },
+        "J1100": {
+          "name": "Dexamethasone 4mg IV",
+          "description": "Steroid for asthma, allergic reactions, croup.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "J1170": {
+          "name": "Hydromorphone (Dilaudid) 1mg IV",
+          "description": "Opioid analgesic.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "J0170": {
+          "name": "Epinephrine 1mg IV/IM",
+          "description": "For anaphylaxis, cardiac arrest.",
+          "chargemaster_price": 85,
+          "cash_price": 40,
+          "insurance_negotiated_rate": 32,
+          "medicare_rate": 19,
+          "medicaid_rate": 11
+        },
+        "J0690": {
+          "name": "Cefazolin (Ancef) 1g IV",
+          "description": "Antibiotic for skin/soft tissue infections.",
+          "chargemaster_price": 125,
+          "cash_price": 58,
+          "insurance_negotiated_rate": 47,
+          "medicare_rate": 28,
+          "medicaid_rate": 16
+        },
+        "J0696": {
+          "name": "Ceftriaxone (Rocephin) 1g IV/IM",
+          "description": "Broad-spectrum antibiotic.",
+          "chargemaster_price": 145,
+          "cash_price": 68,
+          "insurance_negotiated_rate": 55,
+          "medicare_rate": 33,
+          "medicaid_rate": 19
+        },
+        "J7030": {
+          "name": "Normal Saline IV, 1000 mL",
+          "description": "IV fluid hydration.",
+          "chargemaster_price": 225,
+          "cash_price": 105,
+          "insurance_negotiated_rate": 85,
+          "medicare_rate": 51,
+          "medicaid_rate": 28
+        },
+        "J7040": {
+          "name": "Normal Saline IV, 500 mL",
+          "description": "IV fluid, smaller volume.",
+          "chargemaster_price": 165,
+          "cash_price": 78,
+          "insurance_negotiated_rate": 62,
+          "medicare_rate": 37,
+          "medicaid_rate": 21
+        },
+        "J1940": {
+          "name": "Furosemide (Lasix) 40mg IV",
+          "description": "Diuretic for CHF, fluid overload.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "96365": {
+          "name": "IV Infusion, Therapeutic, 1 Hour",
+          "description": "IV medication infusion (first hour).",
+          "chargemaster_price": 325,
+          "cash_price": 155,
+          "insurance_negotiated_rate": 124,
+          "medicare_rate": 73,
+          "medicaid_rate": 41
+        },
+        "96375": {
+          "name": "IV Push, Additional Medication",
+          "description": "Additional IV push of medication.",
+          "chargemaster_price": 125,
+          "cash_price": 58,
+          "insurance_negotiated_rate": 47,
+          "medicare_rate": 28,
+          "medicaid_rate": 16
+        }
+      }
+    },
+    "supplies": {
+      "description": "Common ER supplies and ancillary charges that show up on itemized bills.",
+      "tests": {
+        "A4550": {
+          "name": "Surgical Tray",
+          "description": "Procedure/suture tray.",
+          "chargemaster_price": 285,
+          "cash_price": 135,
+          "insurance_negotiated_rate": 108,
+          "medicare_rate": 64,
+          "medicaid_rate": 36
+        },
+        "A4649": {
+          "name": "Supplies and Accessories",
+          "description": "Miscellaneous medical supplies.",
+          "chargemaster_price": 95,
+          "cash_price": 45,
+          "insurance_negotiated_rate": 36,
+          "medicare_rate": 22,
+          "medicaid_rate": 12
+        },
+        "A6402": {
+          "name": "Gauze, Sterile, 16+ sq inches",
+          "description": "Sterile gauze dressing.",
+          "chargemaster_price": 45,
+          "cash_price": 22,
+          "insurance_negotiated_rate": 18,
+          "medicare_rate": 10,
+          "medicaid_rate": 6
+        }
+      }
+    }
+  }
+}

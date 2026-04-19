@@ -1,0 +1,58 @@
+[
+  {
+    "id": "u1",
+    "email": "admin@insurepoint.com",
+    "password": "admin123",
+    "name": "Dr. Sarah Chen",
+    "role": "admin",
+    "title": "ER Director"
+  },
+  {
+    "id": "u2",
+    "email": "sarah@hospital.com",
+    "password": "front123",
+    "name": "Sarah Johnson",
+    "role": "frontdesk",
+    "title": "Front Desk Coordinator"
+  },
+  {
+    "id": "u3",
+    "email": "james@hospital.com",
+    "password": "front123",
+    "name": "James Rivera",
+    "role": "frontdesk",
+    "title": "Registration Specialist"
+  },
+  {
+    "id": "u4",
+    "email": "dr.smith@hospital.com",
+    "password": "doc123",
+    "name": "Dr. Michael Smith",
+    "role": "admin",
+    "title": "Attending Physician"
+  },
+  {
+    "id": "u5",
+    "email": "nurse.kim@hospital.com",
+    "password": "nurse123",
+    "name": "Emily Kim",
+    "role": "frontdesk",
+    "title": "Triage Nurse"
+  },
+  {
+    "id": "u6",
+    "email": "khakihadeed@gmail.com",
+    "password": "hadeed",
+    "name": "Hadeed Khaki",
+    "role": "admin",
+    "title": "ER Admin"
+  },
+  {
+    "id": "u7",
+    "email": "ryhanshaik@gmail.com",
+    "password": "ryhan",
+    "name": "Ryhan Shaik",
+    "role": "frontdesk",
+    "title": "Front Desk Admin"
+  }
+]
