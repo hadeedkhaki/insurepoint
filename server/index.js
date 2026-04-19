@@ -419,7 +419,7 @@ app.post('/api/scan-license', async (req, res) => {
     const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer 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',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

@@ -41,11 +41,15 @@ This runs the Express API server and the Vite dev client concurrently.
 
 ### Environment
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` and fill in your keys:
 
 ```
-ANTHROPIC_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key_here
 ```
+
+- `ANTHROPIC_API_KEY` — used for insurance card vision parsing (Claude)
+- `OPENROUTER_API_KEY` — used for driver's license extraction (Gemini via OpenRouter)
 
 ## Project Structure
 
